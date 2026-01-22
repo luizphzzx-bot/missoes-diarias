@@ -19,18 +19,50 @@ body {
   background: #1c1c2b;
   padding: 20px;
   border-radius: 15px;
-  width: 380px;
+  width: 520px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: flex;
+  gap: 20px;
+}
+
+/* ===== PERSONAGEM ===== */
+.hero {
+  width: 160px;
+  background: #2b2b3f;
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+}
+
+.hero-emoji {
+  font-size: 70px;
+}
+
+.stat {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.bar {
+  background: #444;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.bar-fill {
+  height: 10px;
+  background: #ff5555;
+  width: 0%;
+}
+
+/* ===== JOGO ===== */
+.game {
+  flex: 1;
 }
 
 h1, h2 {
   text-align: center;
-}
-
-.character {
-  text-align: center;
-  font-size: 60px;
-  margin: 10px 0;
 }
 
 .level {
@@ -88,52 +120,67 @@ h1, h2 {
 
 <body>
 <div class="card">
-  <h1>🧙‍♂️ Missões RPG</h1>
 
-  <div class="character" id="character">🙂</div>
-
-  <div class="level">
-    Nível <span id="level">1</span> |
-    XP <span id="xp">0</span>/<span id="xpMax">100</span>
+  <!-- ===== PERSONAGEM ===== -->
+  <div class="hero">
+    <div class="hero-emoji" id="heroEmoji">🧍</div>
+    <div class="stat">💪 Força: <span id="strength">0</span></div>
+    <div class="bar">
+      <div class="bar-fill" id="strengthBar"></div>
+    </div>
   </div>
 
-  <div class="xp-bar">
-    <div class="xp" id="xpBar"></div>
+  <!-- ===== JOGO ===== -->
+  <div class="game">
+    <h1>🧙‍♂️ Missões RPG</h1>
+
+    <div class="level">
+      Nível <span id="level">1</span> |
+      XP <span id="xp">0</span>/<span id="xpMax">100</span>
+    </div>
+
+    <div class="xp-bar">
+      <div class="xp" id="xpBar"></div>
+    </div>
+
+    <div id="missions"></div>
+
+    <div class="achievements">
+      <h2>🏆 Conquistas</h2>
+      <div id="ach1" class="achievement">✔ Primeira missão</div>
+      <div id="ach2" class="achievement">🔥 Nível 5</div>
+      <div id="ach3" class="achievement">👑 Nível 10</div>
+    </div>
   </div>
 
-  <div id="missions"></div>
-
-  <div class="achievements">
-    <h2>🏆 Conquistas</h2>
-    <div id="ach1" class="achievement">✔ Primeira missão</div>
-    <div id="ach2" class="achievement">🔥 Nível 5</div>
-    <div id="ach3" class="achievement">👑 Nível 10</div>
-  </div>
 </div>
 
 <script>
-// ================= RESET DIÁRIO =================
+// ===== RESET DIÁRIO =====
 const today = new Date().toDateString();
 if (localStorage.getItem("date") !== today) {
   localStorage.clear();
   localStorage.setItem("date", today);
 }
 
-// ================= ESTADO =================
+// ===== ESTADO =====
 let xp = Number(localStorage.getItem("xp")) || 0;
 let level = Number(localStorage.getItem("level")) || 1;
 let completed = Number(localStorage.getItem("completed")) || 0;
+let strength = Number(localStorage.getItem("strength")) || 0;
 let xpMax = level * 100;
 
-// ================= ELEMENTOS =================
+// ===== ELEMENTOS =====
 const xpEl = document.getElementById("xp");
 const levelEl = document.getElementById("level");
 const xpMaxEl = document.getElementById("xpMax");
 const xpBar = document.getElementById("xpBar");
-const characterEl = document.getElementById("character");
+const heroEmoji = document.getElementById("heroEmoji");
+const strengthEl = document.getElementById("strength");
+const strengthBar = document.getElementById("strengthBar");
 const missionContainer = document.getElementById("missions");
 
-// ================= BANCO DE MISSÕES =================
+// ===== MISSÕES =====
 const allMissions = [
   { id: "banho", text: "🛁 Tomar banho", xp: 30 },
   { id: "louca", text: "🍽️ Lavar a louça", xp: 40 },
@@ -143,18 +190,15 @@ const allMissions = [
   { id: "cachorra", text: "🐕 Passear com a cachorra", xp: 25 },
   { id: "ler", text: "📖 Ler 10 minutos", xp: 30 },
   { id: "agua", text: "🚰 Beber água", xp: 10 },
-  { id: "alongar", text: "🤸 Alongar o corpo", xp: 15 },
-  { id: "estudo", text: "📚 Estudar algo", xp: 40 }
+  { id: "alongar", text: "🤸 Alongar o corpo", xp: 15 }
 ];
 
-// ================= MISSÕES DIÁRIAS =================
 const MISSIONS_PER_DAY = 5;
 
 function getDailyMissions() {
   if (!localStorage.getItem("dailyMissions")) {
     const shuffled = [...allMissions].sort(() => Math.random() - 0.5);
-    localStorage.setItem(
-      "dailyMissions",
+    localStorage.setItem("dailyMissions",
       JSON.stringify(shuffled.slice(0, MISSIONS_PER_DAY))
     );
   }
@@ -174,34 +218,27 @@ function renderMissions() {
   });
 }
 
-// ================= PERSONAGEM =================
-function updateCharacter() {
-  if (level < 5) characterEl.textContent = "🙂";
-  else if (level < 10) characterEl.textContent = "😎";
-  else characterEl.textContent = "👑";
+// ===== PERSONAGEM =====
+function updateHero() {
+  strengthEl.textContent = strength;
+  strengthBar.style.width = Math.min(strength, 100) + "%";
+
+  if (strength < 20) heroEmoji.textContent = "🧍";
+  else if (strength < 50) heroEmoji.textContent = "🏃";
+  else if (strength < 80) heroEmoji.textContent = "💪";
+  else heroEmoji.textContent = "🦸";
 }
 
-// ================= CONQUISTAS =================
-function checkAchievements() {
-  if (completed >= 1)
-    document.getElementById("ach1").classList.add("unlocked");
-  if (level >= 5)
-    document.getElementById("ach2").classList.add("unlocked");
-  if (level >= 10)
-    document.getElementById("ach3").classList.add("unlocked");
-}
-
-// ================= UI =================
+// ===== UI =====
 function updateUI() {
   xpEl.textContent = xp;
   levelEl.textContent = level;
   xpMaxEl.textContent = xpMax;
   xpBar.style.width = (xp / xpMax) * 100 + "%";
-  updateCharacter();
-  checkAchievements();
+  updateHero();
 }
 
-// ================= LEVEL UP =================
+// ===== LEVEL UP =====
 function levelUp() {
   xp -= xpMax;
   level++;
@@ -209,7 +246,7 @@ function levelUp() {
   alert("🎉 LEVEL UP! Agora nível " + level);
 }
 
-// ================= INIT =================
+// ===== INIT =====
 renderMissions();
 
 document.querySelectorAll("input[type=checkbox]").forEach(cb => {
@@ -219,6 +256,7 @@ document.querySelectorAll("input[type=checkbox]").forEach(cb => {
   cb.addEventListener("change", () => {
     if (cb.checked && localStorage.getItem(cb.id) !== "true") {
       xp += Number(cb.dataset.xp);
+      strength += 5; // 💪 ganha força por missão
       completed++;
       while (xp >= xpMax) levelUp();
     }
@@ -226,6 +264,7 @@ document.querySelectorAll("input[type=checkbox]").forEach(cb => {
     localStorage.setItem("xp", xp);
     localStorage.setItem("level", level);
     localStorage.setItem("completed", completed);
+    localStorage.setItem("strength", strength);
     localStorage.setItem(cb.id, cb.checked);
 
     toggleDone(cb);
