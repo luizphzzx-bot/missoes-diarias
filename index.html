@@ -19,7 +19,7 @@ body {
   background: #1c1c2b;
   padding: 20px;
   border-radius: 15px;
-  width: 340px;
+  width: 380px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
@@ -35,13 +35,14 @@ h1, h2 {
 
 .level {
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .xp-bar {
   background: #444;
   border-radius: 10px;
   overflow: hidden;
-  margin: 10px 0;
+  margin-bottom: 15px;
 }
 
 .xp {
@@ -53,7 +54,7 @@ h1, h2 {
 .mission {
   display: flex;
   align-items: center;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .mission input {
@@ -100,69 +101,87 @@ h1, h2 {
     <div class="xp" id="xpBar"></div>
   </div>
 
-  <div class="mission">
-    <input type="checkbox" id="banho" data-xp="30">
-    <label>🛁 Tomar banho (+30 XP)</label>
-  </div>
-
-  <div class="mission">
-    <input type="checkbox" id="louca" data-xp="40">
-    <label>🍽️ Lavar a louça (+40 XP)</label>
-  </div>
-
-  <div class="mission">
-    <input type="checkbox" id="cama" data-xp="20">
-    <label>🛏️ Arrumar a cama (+20 XP)</label>
-  </div>
+  <div id="missions"></div>
 
   <div class="achievements">
     <h2>🏆 Conquistas</h2>
-    <div id="ach1" class="achievement">✔ Primeiro passo</div>
-    <div id="ach2" class="achievement">🔥 Subiu para nível 5</div>
-    <div id="ach3" class="achievement">👑 Subiu para nível 10</div>
+    <div id="ach1" class="achievement">✔ Primeira missão</div>
+    <div id="ach2" class="achievement">🔥 Nível 5</div>
+    <div id="ach3" class="achievement">👑 Nível 10</div>
   </div>
 </div>
 
 <script>
+// ================= RESET DIÁRIO =================
 const today = new Date().toDateString();
 if (localStorage.getItem("date") !== today) {
   localStorage.clear();
   localStorage.setItem("date", today);
 }
 
+// ================= ESTADO =================
 let xp = Number(localStorage.getItem("xp")) || 0;
 let level = Number(localStorage.getItem("level")) || 1;
-let xpMax = level * 100;
 let completed = Number(localStorage.getItem("completed")) || 0;
+let xpMax = level * 100;
 
+// ================= ELEMENTOS =================
 const xpEl = document.getElementById("xp");
 const levelEl = document.getElementById("level");
 const xpMaxEl = document.getElementById("xpMax");
 const xpBar = document.getElementById("xpBar");
 const characterEl = document.getElementById("character");
+const missionContainer = document.getElementById("missions");
 
+// ================= BANCO DE MISSÕES =================
+const allMissions = [
+  { id: "banho", text: "🛁 Tomar banho", xp: 30 },
+  { id: "louca", text: "🍽️ Lavar a louça", xp: 40 },
+  { id: "cama", text: "🛏️ Arrumar a cama", xp: 20 },
+  { id: "bola", text: "⚽ Jogar bola", xp: 35 },
+  { id: "casa", text: "🧹 Arrumar a casa", xp: 50 },
+  { id: "cachorra", text: "🐕 Passear com a cachorra", xp: 25 },
+  { id: "ler", text: "📖 Ler 10 minutos", xp: 30 },
+  { id: "agua", text: "🚰 Beber água", xp: 10 },
+  { id: "alongar", text: "🤸 Alongar o corpo", xp: 15 },
+  { id: "estudo", text: "📚 Estudar algo", xp: 40 }
+];
+
+// ================= MISSÕES DIÁRIAS =================
+const MISSIONS_PER_DAY = 5;
+
+function getDailyMissions() {
+  if (!localStorage.getItem("dailyMissions")) {
+    const shuffled = [...allMissions].sort(() => Math.random() - 0.5);
+    localStorage.setItem(
+      "dailyMissions",
+      JSON.stringify(shuffled.slice(0, MISSIONS_PER_DAY))
+    );
+  }
+  return JSON.parse(localStorage.getItem("dailyMissions"));
+}
+
+function renderMissions() {
+  missionContainer.innerHTML = "";
+  getDailyMissions().forEach(m => {
+    const div = document.createElement("div");
+    div.className = "mission";
+    div.innerHTML = `
+      <input type="checkbox" id="${m.id}" data-xp="${m.xp}">
+      <label>${m.text} (+${m.xp} XP)</label>
+    `;
+    missionContainer.appendChild(div);
+  });
+}
+
+// ================= PERSONAGEM =================
 function updateCharacter() {
   if (level < 5) characterEl.textContent = "🙂";
   else if (level < 10) characterEl.textContent = "😎";
   else characterEl.textContent = "👑";
 }
 
-function updateUI() {
-  xpEl.textContent = xp;
-  levelEl.textContent = level;
-  xpMaxEl.textContent = xpMax;
-  xpBar.style.width = (xp / xpMax) * 100 + "%";
-  updateCharacter();
-  checkAchievements();
-}
-
-function levelUp() {
-  xp -= xpMax;
-  level++;
-  xpMax = level * 100;
-  alert("🎉 LEVEL UP! Agora nível " + level);
-}
-
+// ================= CONQUISTAS =================
 function checkAchievements() {
   if (completed >= 1)
     document.getElementById("ach1").classList.add("unlocked");
@@ -172,20 +191,43 @@ function checkAchievements() {
     document.getElementById("ach3").classList.add("unlocked");
 }
 
+// ================= UI =================
+function updateUI() {
+  xpEl.textContent = xp;
+  levelEl.textContent = level;
+  xpMaxEl.textContent = xpMax;
+  xpBar.style.width = (xp / xpMax) * 100 + "%";
+  updateCharacter();
+  checkAchievements();
+}
+
+// ================= LEVEL UP =================
+function levelUp() {
+  xp -= xpMax;
+  level++;
+  xpMax = level * 100;
+  alert("🎉 LEVEL UP! Agora nível " + level);
+}
+
+// ================= INIT =================
+renderMissions();
+
 document.querySelectorAll("input[type=checkbox]").forEach(cb => {
   cb.checked = localStorage.getItem(cb.id) === "true";
   toggleDone(cb);
 
   cb.addEventListener("change", () => {
-    if (cb.checked) {
+    if (cb.checked && localStorage.getItem(cb.id) !== "true") {
       xp += Number(cb.dataset.xp);
       completed++;
-      if (xp >= xpMax) levelUp();
+      while (xp >= xpMax) levelUp();
     }
+
     localStorage.setItem("xp", xp);
     localStorage.setItem("level", level);
     localStorage.setItem("completed", completed);
     localStorage.setItem(cb.id, cb.checked);
+
     toggleDone(cb);
     updateUI();
   });
