@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Missões Diárias RPG</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.card {
+  background: #1c1c2b;
+  padding: 20px;
+  border-radius: 15px;
+  width: 340px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+.character {
+  text-align: center;
+  font-size: 60px;
+  margin: 10px 0;
+}
+
+.level {
+  text-align: center;
+}
+
+.xp-bar {
+  background: #444;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.xp {
+  height: 15px;
+  background: #00ff99;
+  width: 0%;
+}
+
+.mission {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.mission input {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+.done {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.achievements {
+  margin-top: 15px;
+  background: #2b2b3f;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.achievement {
+  opacity: 0.4;
+}
+
+.unlocked {
+  opacity: 1;
+  color: #ffd700;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h1>🧙‍♂️ Missões RPG</h1>
+
+  <div class="character" id="character">🙂</div>
+
+  <div class="level">
+    Nível <span id="level">1</span> |
+    XP <span id="xp">0</span>/<span id="xpMax">100</span>
+  </div>
+
+  <div class="xp-bar">
+    <div class="xp" id="xpBar"></div>
+  </div>
+
+  <div class="mission">
+    <input type="checkbox" id="banho" data-xp="30">
+    <label>🛁 Tomar banho (+30 XP)</label>
+  </div>
+
+  <div class="mission">
+    <input type="checkbox" id="louca" data-xp="40">
+    <label>🍽️ Lavar a louça (+40 XP)</label>
+  </div>
+
+  <div class="mission">
+    <input type="checkbox" id="cama" data-xp="20">
+    <label>🛏️ Arrumar a cama (+20 XP)</label>
+  </div>
+
+  <div class="achievements">
+    <h2>🏆 Conquistas</h2>
+    <div id="ach1" class="achievement">✔ Primeiro passo</div>
+    <div id="ach2" class="achievement">🔥 Subiu para nível 5</div>
+    <div id="ach3" class="achievement">👑 Subiu para nível 10</div>
+  </div>
+</div>
+
+<script>
+const today = new Date().toDateString();
+if (localStorage.getItem("date") !== today) {
+  localStorage.clear();
+  localStorage.setItem("date", today);
+}
+
+let xp = Number(localStorage.getItem("xp")) || 0;
+let level = Number(localStorage.getItem("level")) || 1;
+let xpMax = level * 100;
+let completed = Number(localStorage.getItem("completed")) || 0;
+
+const xpEl = document.getElementById("xp");
+const levelEl = document.getElementById("level");
+const xpMaxEl = document.getElementById("xpMax");
+const xpBar = document.getElementById("xpBar");
+const characterEl = document.getElementById("character");
+
+function updateCharacter() {
+  if (level < 5) characterEl.textContent = "🙂";
+  else if (level < 10) characterEl.textContent = "😎";
+  else characterEl.textContent = "👑";
+}
+
+function updateUI() {
+  xpEl.textContent = xp;
+  levelEl.textContent = level;
+  xpMaxEl.textContent = xpMax;
+  xpBar.style.width = (xp / xpMax) * 100 + "%";
+  updateCharacter();
+  checkAchievements();
+}
+
+function levelUp() {
+  xp -= xpMax;
+  level++;
+  xpMax = level * 100;
+  alert("🎉 LEVEL UP! Agora nível " + level);
+}
+
+function checkAchievements() {
+  if (completed >= 1)
+    document.getElementById("ach1").classList.add("unlocked");
+  if (level >= 5)
+    document.getElementById("ach2").classList.add("unlocked");
+  if (level >= 10)
+    document.getElementById("ach3").classList.add("unlocked");
+}
+
+document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+  cb.checked = localStorage.getItem(cb.id) === "true";
+  toggleDone(cb);
+
+  cb.addEventListener("change", () => {
+    if (cb.checked) {
+      xp += Number(cb.dataset.xp);
+      completed++;
+      if (xp >= xpMax) levelUp();
+    }
+    localStorage.setItem("xp", xp);
+    localStorage.setItem("level", level);
+    localStorage.setItem("completed", completed);
+    localStorage.setItem(cb.id, cb.checked);
+    toggleDone(cb);
+    updateUI();
+  });
+});
+
+function toggleDone(cb) {
+  cb.nextElementSibling.classList.toggle("done", cb.checked);
+}
+
+updateUI();
+</script>
+</body>
+</html>
