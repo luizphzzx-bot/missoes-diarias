@@ -25,7 +25,6 @@ body {
   gap: 20px;
 }
 
-/* ===== PERSONAGEM ===== */
 .hero {
   width: 160px;
   background: #2b2b3f;
@@ -34,14 +33,9 @@ body {
   text-align: center;
 }
 
-.hero-emoji {
-  font-size: 70px;
-}
+.hero-emoji { font-size: 70px; }
 
-.stat {
-  margin-top: 10px;
-  font-size: 14px;
-}
+.stat { margin-top: 10px; font-size: 14px; }
 
 .bar {
   background: #444;
@@ -56,19 +50,9 @@ body {
   width: 0%;
 }
 
-/* ===== JOGO ===== */
-.game {
-  flex: 1;
-}
+.game { flex: 1; }
 
-h1, h2 {
-  text-align: center;
-}
-
-.level {
-  text-align: center;
-  margin-bottom: 10px;
-}
+.level { text-align: center; margin-bottom: 10px; }
 
 .xp-bar {
   background: #444;
@@ -77,11 +61,7 @@ h1, h2 {
   margin-bottom: 15px;
 }
 
-.xp {
-  height: 15px;
-  background: #00ff99;
-  width: 0%;
-}
+.xp { height: 15px; background: #00ff99; width: 0%; }
 
 .mission {
   display: flex;
@@ -89,207 +69,10 @@ h1, h2 {
   margin: 6px 0;
 }
 
-.mission input {
-  margin-right: 10px;
-  transform: scale(1.2);
-}
+.mission input { margin-right: 10px; transform: scale(1.2); }
+.mission input:disabled { cursor: not-allowed; }
 
-.mission input:disabled {
-  cursor: not-allowed;
-}
-
-.done {
-  text-decoration: line-through;
-  color: #aaa;
-}
+.done { text-decoration: line-through; color: #aaa; }
 
 .achievements {
-  margin-top: 15px;
-  background: #2b2b3f;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 14px;
-}
-
-.achievement {
-  opacity: 0.4;
-}
-
-.unlocked {
-  opacity: 1;
-  color: #ffd700;
-}
-</style>
-</head>
-
-<body>
-<div class="card">
-
-  <!-- PERSONAGEM -->
-  <div class="hero">
-    <div class="hero-emoji" id="heroEmoji">🧍</div>
-    <div class="stat">💪 Força: <span id="strength">0</span></div>
-    <div class="bar">
-      <div class="bar-fill" id="strengthBar"></div>
-    </div>
-  </div>
-
-  <!-- JOGO -->
-  <div class="game">
-    <h1>🧙‍♂️ Missões RPG</h1>
-
-    <div class="level">
-      Nível <span id="level">1</span> |
-      XP <span id="xp">0</span>/<span id="xpMax">100</span>
-    </div>
-
-    <div class="xp-bar">
-      <div class="xp" id="xpBar"></div>
-    </div>
-
-    <div id="missions"></div>
-
-    <div class="achievements">
-      <h2>🏆 Conquistas</h2>
-      <div id="ach1" class="achievement">✔ Primeira missão</div>
-      <div id="ach2" class="achievement">🔥 Nível 5</div>
-      <div id="ach3" class="achievement">👑 Nível 10</div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-// ===== RESET DIÁRIO =====
-const today = new Date().toDateString();
-if (localStorage.getItem("date") !== today) {
-  localStorage.clear();
-  localStorage.setItem("date", today);
-}
-
-// ===== ESTADO =====
-let xp = Number(localStorage.getItem("xp")) || 0;
-let level = Number(localStorage.getItem("level")) || 1;
-let completed = Number(localStorage.getItem("completed")) || 0;
-let strength = Number(localStorage.getItem("strength")) || 0;
-let xpMax = level * 100;
-
-// ===== ELEMENTOS =====
-const xpEl = document.getElementById("xp");
-const levelEl = document.getElementById("level");
-const xpMaxEl = document.getElementById("xpMax");
-const xpBar = document.getElementById("xpBar");
-const heroEmoji = document.getElementById("heroEmoji");
-const strengthEl = document.getElementById("strength");
-const strengthBar = document.getElementById("strengthBar");
-const missionContainer = document.getElementById("missions");
-
-// ===== MISSÕES =====
-const allMissions = [
-  { id: "banho", text: "🛁 Tomar banho", xp: 30 },
-  { id: "louca", text: "🍽️ Lavar a louça", xp: 40 },
-  { id: "cama", text: "🛏️ Arrumar a cama", xp: 20 },
-  { id: "bola", text: "⚽ Jogar bola", xp: 35 },
-  { id: "casa", text: "🧹 Arrumar a casa", xp: 50 },
-  { id: "cachorra", text: "🐕 Passear com a cachorra", xp: 25 },
-  { id: "ler", text: "📖 Ler 10 minutos", xp: 30 },
-  { id: "agua", text: "🚰 Beber água", xp: 10 },
-  { id: "alongar", text: "🤸 Alongar o corpo", xp: 15 }
-];
-
-const MISSIONS_PER_DAY = 5;
-
-function getDailyMissions() {
-  if (!localStorage.getItem("dailyMissions")) {
-    const shuffled = [...allMissions].sort(() => Math.random() - 0.5);
-    localStorage.setItem(
-      "dailyMissions",
-      JSON.stringify(shuffled.slice(0, MISSIONS_PER_DAY))
-    );
-  }
-  return JSON.parse(localStorage.getItem("dailyMissions"));
-}
-
-function renderMissions() {
-  missionContainer.innerHTML = "";
-  getDailyMissions().forEach(m => {
-    const div = document.createElement("div");
-    div.className = "mission";
-    div.innerHTML = `
-      <input type="checkbox" id="${m.id}" data-xp="${m.xp}">
-      <label>${m.text} (+${m.xp} XP)</label>
-    `;
-    missionContainer.appendChild(div);
-  });
-}
-
-// ===== PERSONAGEM =====
-function updateHero() {
-  strengthEl.textContent = strength;
-  strengthBar.style.width = Math.min(strength, 100) + "%";
-
-  if (strength < 20) heroEmoji.textContent = "🧍";
-  else if (strength < 50) heroEmoji.textContent = "🏃";
-  else if (strength < 80) heroEmoji.textContent = "💪";
-  else heroEmoji.textContent = "🦸";
-}
-
-// ===== UI =====
-function updateUI() {
-  xpEl.textContent = xp;
-  levelEl.textContent = level;
-  xpMaxEl.textContent = xpMax;
-  xpBar.style.width = (xp / xpMax) * 100 + "%";
-  updateHero();
-}
-
-// ===== LEVEL UP =====
-function levelUp() {
-  xp -= xpMax;
-  level++;
-  xpMax = level * 100;
-  alert("🎉 LEVEL UP! Agora nível " + level);
-}
-
-// ===== INIT =====
-renderMissions();
-
-document.querySelectorAll("input[type=checkbox]").forEach(cb => {
-  const saved = localStorage.getItem(cb.id) === "true";
-
-  if (saved) {
-    cb.checked = true;
-    cb.disabled = true; // 🔒 trava para sempre
-    toggleDone(cb);
-  }
-
-  cb.addEventListener("change", () => {
-    if (cb.checked) {
-      xp += Number(cb.dataset.xp);
-      strength += 5;
-      completed++;
-
-      while (xp >= xpMax) levelUp();
-
-      cb.disabled = true; // 🔒 trava após marcar
-
-      localStorage.setItem(cb.id, "true");
-      localStorage.setItem("xp", xp);
-      localStorage.setItem("level", level);
-      localStorage.setItem("completed", completed);
-      localStorage.setItem("strength", strength);
-
-      toggleDone(cb);
-      updateUI();
-    }
-  });
-});
-
-function toggleDone(cb) {
-  cb.nextElementSibling.classList.add("done");
-}
-
-updateUI();
-</script>
-</body>
-</html>
+  margin-top
