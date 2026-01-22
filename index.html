@@ -94,6 +94,10 @@ h1, h2 {
   transform: scale(1.2);
 }
 
+.mission input:disabled {
+  cursor: not-allowed;
+}
+
 .done {
   text-decoration: line-through;
   color: #aaa;
@@ -121,7 +125,7 @@ h1, h2 {
 <body>
 <div class="card">
 
-  <!-- ===== PERSONAGEM ===== -->
+  <!-- PERSONAGEM -->
   <div class="hero">
     <div class="hero-emoji" id="heroEmoji">🧍</div>
     <div class="stat">💪 Força: <span id="strength">0</span></div>
@@ -130,7 +134,7 @@ h1, h2 {
     </div>
   </div>
 
-  <!-- ===== JOGO ===== -->
+  <!-- JOGO -->
   <div class="game">
     <h1>🧙‍♂️ Missões RPG</h1>
 
@@ -198,7 +202,8 @@ const MISSIONS_PER_DAY = 5;
 function getDailyMissions() {
   if (!localStorage.getItem("dailyMissions")) {
     const shuffled = [...allMissions].sort(() => Math.random() - 0.5);
-    localStorage.setItem("dailyMissions",
+    localStorage.setItem(
+      "dailyMissions",
       JSON.stringify(shuffled.slice(0, MISSIONS_PER_DAY))
     );
   }
@@ -250,30 +255,38 @@ function levelUp() {
 renderMissions();
 
 document.querySelectorAll("input[type=checkbox]").forEach(cb => {
-  cb.checked = localStorage.getItem(cb.id) === "true";
-  toggleDone(cb);
+  const saved = localStorage.getItem(cb.id) === "true";
+
+  if (saved) {
+    cb.checked = true;
+    cb.disabled = true; // 🔒 trava para sempre
+    toggleDone(cb);
+  }
 
   cb.addEventListener("change", () => {
-    if (cb.checked && localStorage.getItem(cb.id) !== "true") {
+    if (cb.checked) {
       xp += Number(cb.dataset.xp);
-      strength += 5; // 💪 ganha força por missão
+      strength += 5;
       completed++;
+
       while (xp >= xpMax) levelUp();
+
+      cb.disabled = true; // 🔒 trava após marcar
+
+      localStorage.setItem(cb.id, "true");
+      localStorage.setItem("xp", xp);
+      localStorage.setItem("level", level);
+      localStorage.setItem("completed", completed);
+      localStorage.setItem("strength", strength);
+
+      toggleDone(cb);
+      updateUI();
     }
-
-    localStorage.setItem("xp", xp);
-    localStorage.setItem("level", level);
-    localStorage.setItem("completed", completed);
-    localStorage.setItem("strength", strength);
-    localStorage.setItem(cb.id, cb.checked);
-
-    toggleDone(cb);
-    updateUI();
   });
 });
 
 function toggleDone(cb) {
-  cb.nextElementSibling.classList.toggle("done", cb.checked);
+  cb.nextElementSibling.classList.add("done");
 }
 
 updateUI();
