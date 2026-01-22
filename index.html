@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <title>Missões Diárias RPG</title>
 
-<button onclick="resetGame()">🔄 Reiniciar Progresso</button>
-  function resetGame() {
-  if (confirm("Tem certeza que deseja apagar TODO o progresso?")) {
-    localStorage.clear();
-    location.reload();
-  }
-}
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -26,60 +19,258 @@ body {
   background: #1c1c2b;
   padding: 20px;
   border-radius: 15px;
-  width: 520px;
+  width: 360px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-  display: flex;
-  gap: 20px;
 }
 
-.hero {
-  width: 160px;
-  background: #2b2b3f;
-  border-radius: 15px;
-  padding: 15px;
+h1, h2 {
   text-align: center;
 }
 
-.hero-emoji { font-size: 70px; }
-
-.stat { margin-top: 10px; font-size: 14px; }
-
-.bar {
-  background: #444;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 5px;
+.top-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
-.bar-fill {
-  height: 10px;
-  background: #ff5555;
-  width: 0%;
+.reset-btn {
+  background: linear-gradient(135deg, #ff4d4d, #b30000);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.game { flex: 1; }
+.reset-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(255,0,0,0.5);
+}
 
-.level { text-align: center; margin-bottom: 10px; }
+.status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.character {
+  font-size: 60px;
+}
+
+.stats {
+  text-align: right;
+  font-size: 14px;
+}
 
 .xp-bar {
   background: #444;
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 15px;
+  margin: 10px 0;
 }
 
-.xp { height: 15px; background: #00ff99; width: 0%; }
+.xp {
+  height: 15px;
+  background: #00ff99;
+  width: 0%;
+}
 
 .mission {
   display: flex;
   align-items: center;
-  margin: 6px 0;
+  margin: 8px 0;
 }
 
-.mission input { margin-right: 10px; transform: scale(1.2); }
-.mission input:disabled { cursor: not-allowed; }
+.mission input {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
 
-.done { text-decoration: line-through; color: #aaa; }
+.done {
+  text-decoration: line-through;
+  color: #aaa;
+}
 
 .achievements {
-  margin-top
+  margin-top: 15px;
+  background: #2b2b3f;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.achievement {
+  opacity: 0.4;
+}
+
+.unlocked {
+  opacity: 1;
+  color: #ffd700;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+
+  <h1>🧙‍♂️ Missões RPG</h1>
+
+  <div class="top-actions">
+    <button class="reset-btn" onclick="resetGame()">🔄 Reiniciar Progresso</button>
+  </div>
+
+  <div class="status">
+    <div class="character" id="character">🙂</div>
+    <div class="stats">
+      Nível <span id="level">1</span><br>
+      Força 💪 <span id="strength">0</span>
+    </div>
+  </div>
+
+  XP <span id="xp">0</span>/<span id="xpMax">100</span>
+  <div class="xp-bar">
+    <div class="xp" id="xpBar"></div>
+  </div>
+
+  <div id="missions"></div>
+
+  <div class="achievements">
+    <h2>🏆 Conquistas</h2>
+    <div id="ach1" class="achievement">✔ Primeiro passo</div>
+    <div id="ach2" class="achievement">🔥 Nível 5</div>
+    <div id="ach3" class="achievement">👑 Nível 10</div>
+  </div>
+</div>
+
+<script>
+const allMissions = [
+  { id: "banho", text: "🛁 Tomar banho", xp: 30 },
+  { id: "louca", text: "🍽️ Lavar a louça", xp: 40 },
+  { id: "cama", text: "🛏️ Arrumar a cama", xp: 20 },
+  { id: "bola", text: "⚽ Jogar bola", xp: 35 },
+  { id: "casa", text: "🧹 Arrumar a casa", xp: 50 },
+  { id: "cachorra", text: "🐕 Passear com a cachorra", xp: 25 },
+  { id: "ler", text: "📘 Ler 10 páginas", xp: 30 },
+  { id: "agua", text: "💧 Beber água", xp: 15 }
+];
+
+const today = new Date().toDateString();
+
+if (localStorage.getItem("date") !== today) {
+  localStorage.setItem("date", today);
+  localStorage.removeItem("dailyMissions");
+
+  Object.keys(localStorage).forEach(k => {
+    if (k.startsWith("mission_")) localStorage.removeItem(k);
+  });
+}
+
+let xp = Number(localStorage.getItem("xp")) || 0;
+let level = Number(localStorage.getItem("level")) || 1;
+let strength = Number(localStorage.getItem("strength")) || 0;
+let completed = Number(localStorage.getItem("completed")) || 0;
+let xpMax = level * 100;
+
+const xpEl = document.getElementById("xp");
+const levelEl = document.getElementById("level");
+const xpMaxEl = document.getElementById("xpMax");
+const xpBar = document.getElementById("xpBar");
+const strengthEl = document.getElementById("strength");
+const characterEl = document.getElementById("character");
+const missionsEl = document.getElementById("missions");
+
+function resetGame() {
+  if (confirm("⚠️ Tem certeza que deseja apagar TODO o progresso?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function updateCharacter() {
+  if (strength < 20) characterEl.textContent = "🙂";
+  else if (strength < 50) characterEl.textContent = "😎";
+  else characterEl.textContent = "👑";
+}
+
+function updateUI() {
+  xpEl.textContent = xp;
+  levelEl.textContent = level;
+  xpMaxEl.textContent = xpMax;
+  strengthEl.textContent = strength;
+  xpBar.style.width = (xp / xpMax) * 100 + "%";
+  updateCharacter();
+
+  if (completed >= 1) ach1.classList.add("unlocked");
+  if (level >= 5) ach2.classList.add("unlocked");
+  if (level >= 10) ach3.classList.add("unlocked");
+}
+
+function levelUp() {
+  xp -= xpMax;
+  level++;
+  xpMax = level * 100;
+  alert("🎉 LEVEL UP! Agora nível " + level);
+}
+
+function renderMissions() {
+  let daily = JSON.parse(localStorage.getItem("dailyMissions"));
+
+  if (!daily) {
+    daily = [...allMissions].sort(() => 0.5 - Math.random()).slice(0, 5);
+    localStorage.setItem("dailyMissions", JSON.stringify(daily));
+  }
+
+  daily.forEach(m => {
+    const id = "mission_" + m.id;
+    const done = localStorage.getItem(id);
+
+    const div = document.createElement("div");
+    div.className = "mission";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = id;
+    cb.dataset.xp = m.xp;
+
+    if (done) {
+      cb.checked = true;
+      cb.disabled = true;
+      div.classList.add("done");
+    }
+
+    cb.addEventListener("change", () => {
+      if (!localStorage.getItem(id)) {
+        xp += m.xp;
+        strength += 5;
+        completed++;
+
+        while (xp >= xpMax) levelUp();
+
+        localStorage.setItem(id, "true");
+        localStorage.setItem("xp", xp);
+        localStorage.setItem("level", level);
+        localStorage.setItem("strength", strength);
+        localStorage.setItem("completed", completed);
+
+        cb.disabled = true;
+        div.classList.add("done");
+        updateUI();
+      }
+    });
+
+    const label = document.createElement("label");
+    label.textContent = `${m.text} (+${m.xp} XP)`;
+
+    div.appendChild(cb);
+    div.appendChild(label);
+    missionsEl.appendChild(div);
+  });
+}
+
+renderMissions();
+updateUI();
+</script>
+</body>
+</html>
