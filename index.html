@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <title>Missões Diárias RPG</title>
 
+<button onclick="resetGame()">🔄 Reiniciar Progresso</button>
+  function resetGame() {
+  if (confirm("Tem certeza que deseja apagar TODO o progresso?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+  
 <style>
 body {
   font-family: Arial, sans-serif;
